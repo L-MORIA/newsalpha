@@ -150,14 +150,13 @@ F821 в kommersant.py исправлен, тесты пересобраны с �
 Диагностика на Lenta (исправленная): предиктивная сила ≈ 0 и ниже случайного ранжирования
 (z ≈ −2) — ожидаемо для нецелевого корпуса (вся экон-лента ≠ рубрика Ъ «Финансы»).
 
-### Этап 5. Базлайны (`src/newsalpha/baselines`) ⬜
-- **SESTM** — пишем сами по официальному MATLAB-коду JASA-supplement
-  (screening f_i ≥ thresh·log N; оценка O регрессией на ранговых весах + симплекс).
-  Битый sestm.py авторов не чиним.
-- **Shallow embeddings**: Word2Vec/Navec/Doc2Vec/FastText × RF/LR/GBM/SVM/NN
-  (full text / title / abstract — 20 комбинаций).
-- **Эндогенные**: 5 лагов доходности × те же 5 ML — обязательная атрибуция.
-- ruBERT/RuSentBERT эмбеддинги → Ridge/LogReg — контрмера к замечанию Громова.
+### Этап 5. Базлайны (`src/newsalpha/baselines`) 🔄
+- [x] Эндогенные: 5 лагов доходности × 5 ML — LR, Ridge, RF, GBM, SVM (expanding CV). ✅ 25.08
+- [x] SESTM: screening f_i ≥ thresh·log N, supervised topic model, p-score (по MATLAB-спеке). ✅ 25.08
+- [ ] Shallow embeddings: Word2Vec/Navec/Doc2Vec/FastText × RF/LR/GBM/SVM/NN
+      (full text / title / abstract — 20 комбинаций).
+- [ ] ruBERT/RuSentBERT эмбеддинги → Ridge/LogReg — контрмера к замечанию Громова.
+- [ ] Прогон baselines на Lenta-индексах (run_baselines.py).
 
 ### Этап 6. Оценка (`src/newsalpha/evaluation`) ✅ (ядро)
 Грейнджер maxlag=5 (+ADF); **placebo ±k недель** (заготовка, требует rebuild streams);
@@ -190,9 +189,10 @@ STTM ниже случайного, z ≈ −2. Чекпойнт статьи (1
 либо независимая реализация опровергает результат статьи. Оба исхода фиксируем.
 (Отозванные числа первой версии — level 1.00 / delta 1.06, z≈+1.3 — продукт бага осей.)
 
-### Этап 8. Воспроизводимость ⬜ (в процессе)
-`run_all.py` одной командой; фиксация random_seed в `config/default.yaml`;
-CI: ruff (E402 в scripts допускается) + pytest.
+### Этап 8. Воспроизводимость 🔄 (в процессе)
+- [x] `run_all.py` 5-стадийный пайплайн с `--skip-*` флагами. ✅ 25.08
+- [ ] CI: ruff (E402 в scripts допускается) + pytest.
+- [ ] GitHub Actions workflow.
 
 ### Этап 9. Расширение 2022–2026 «метод после разлома» ⬜ (решение владельца, авг 2026)
 Ядро проекта остаётся 2013–2021 (воспроизведение); этот этап — отдельный out-of-sample
