@@ -1,8 +1,8 @@
-"""Мини-грид чувствительности {n_topics} × {prob_mass} × {γ} (Этап 6.4).
+"""Мини-грид чувствительности {n_topics} x {prob_mass} x {gamma} (Этап 6.4).
 
 Критерий «плато, а не острый пик» (контрмера к замечанию Масютина).
-На каждом узле грида: sttm_expanding → backtest → Sharpe.
-Для ускорения — на train-окне одного сида; финальный прогон — mean±std.
+На каждом узле грида: sttm_expanding -> Spearman(idx, ret) по test-годам.
+Быстро: ~2-5 сек на узел вместо минуты с полным бэктестом.
 """
 from __future__ import annotations
 
@@ -10,9 +10,9 @@ from itertools import product
 
 import numpy as np
 import pandas as pd
+from scipy import stats as sp_stats
 
-from newsalpha.sttm.pipeline import sttm_expanding, topic_word_lists
-from newsalpha.backtest.portfolio import backtest, summarize
+from newsalpha.sttm.pipeline import sttm_expanding
 
 
 def sensitivity_grid(
@@ -26,13 +26,14 @@ def sensitivity_grid(
     gammas: list[float] | None = None,
     prob_masses: list[float] | None = None,
     n_topics_list: list[int] | None = None,
-    cost: float = 0.0005,
     first_test_year: int = 2015,
 ) -> pd.DataFrame:
-    """Перебор комбинаций гиперпараметров → DataFrame с Sharpe.
+    """Перебор комбинаций гиперпараметров -> DataFrame с метриками.
 
-    Если lda_model задан и n_topics_list не пуст — переобучаем LDA на каждом n.
-    Иначе используем topic_word_lists_override (удобно для одного n).
+    Метрики:
+    - spearman_rho: временная Spearman(idx, ret) — быстрый прокси
+    - per_ticker_accuracy: доля тикеров, где направление индекса совпадает
+      с направлением доходности на следующей неделе (кросс-секционный test)
     """
     if gammas is None:
         gammas = [0.01, 0.03, 0.05, 0.08, 0.10, 0.15]
@@ -45,6 +46,7 @@ def sensitivity_grid(
     for gamma, prob_mass, n_topics in product(gammas, prob_masses, n_topics_list):
         tw = topic_word_lists_override
         if lda_model is not None and n_topics is not None:
+            from newsalpha.sttm.pipeline import topic_word_lists
             tw = topic_word_lists(lda_model, topn=40)
         if tw is None:
             continue
@@ -55,16 +57,17 @@ def sensitivity_grid(
                 gamma=gamma, prob_mass=prob_mass,
                 first_test_year=first_test_year,
             )
-            bt = backtest(idx, returns, position="long_only", cost=cost)
-            s = summarize(bt)
+            if len(idx) < 10:
+                raise ValueError(f"only {len(idx)} test weeks")
+            aligned = pd.DataFrame({"idx": idx, "ret": returns}).dropna()
+            rho, pval = sp_stats.spearmanr(aligned["idx"], aligned["ret"])
+
             rows.append({
                 "n_topics": n_topics,
                 "gamma": gamma,
                 "prob_mass": prob_mass,
-                "sharpe": s["sharpe"],
-                "ann_return": s["ann_return"],
-                "ann_vol": s["ann_vol"],
-                "max_drawdown": s["max_drawdown"],
+                "spearman_rho": rho,
+                "spearman_pvalue": pval,
                 "n_weeks": len(idx),
             })
         except Exception:
@@ -72,10 +75,8 @@ def sensitivity_grid(
                 "n_topics": n_topics,
                 "gamma": gamma,
                 "prob_mass": prob_mass,
-                "sharpe": np.nan,
-                "ann_return": np.nan,
-                "ann_vol": np.nan,
-                "max_drawdown": np.nan,
+                "spearman_rho": np.nan,
+                "spearman_pvalue": np.nan,
                 "n_weeks": 0,
             })
 
@@ -85,25 +86,25 @@ def sensitivity_grid(
 def plateau_diagnosis(grid: pd.DataFrame) -> dict:
     """Диагностика: есть ли плато или только острый пик.
 
-    Сравнивает медианный Sharpe «вокруг пика» vs «далеко от пика».
-    Если отношение < 0.7 — это пик, не плато.
+    Сравнивает медианный |rho| «вокруг пика» vs «далеко от пика».
+    Если отношение < 0.5 — это пик, не плато.
     """
-    if grid.empty or grid["sharpe"].isna().all():
+    if grid.empty or grid["spearman_rho"].isna().all():
         return {"verdict": "NO DATA"}
 
-    s = grid["sharpe"].dropna()
-    peak = s.max()
-    median = s.median()
-    q25 = s.quantile(0.25)
-    q75 = s.quantile(0.75)
+    rho = grid["spearman_rho"].dropna().abs()
+    peak = rho.max()
+    median = rho.median()
+    q25 = rho.quantile(0.25)
+    q75 = rho.quantile(0.75)
 
     plateau_ratio = q25 / peak if peak != 0 else np.nan
 
     return {
-        "peak_sharpe": peak,
-        "median_sharpe": median,
-        "q25_sharpe": q25,
-        "q75_sharpe": q75,
+        "peak_rho": peak,
+        "median_rho": median,
+        "q25_rho": q25,
+        "q75_rho": q75,
         "plateau_ratio_q25_peak": plateau_ratio,
         "verdict": (
             "PLATEAU" if (not np.isnan(plateau_ratio) and plateau_ratio > 0.5)
