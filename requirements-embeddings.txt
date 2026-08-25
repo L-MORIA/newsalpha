@@ -1,0 +1,5 @@
+# Тяжёлые зависимости для базлайна эмбеддингов (этап 5, PLAN.md)
+# Установка: pip install -r requirements-embeddings.txt
+torch>=2.0
+transformers>=4.35     # ruBERT / RuSentBERT
+sentence-transformers>=2.2

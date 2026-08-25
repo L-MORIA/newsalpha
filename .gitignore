@@ -1,0 +1,18 @@
+# данные и артефакты — не в git (большие, воспроизводимые пайплайном)
+data/raw/
+data/interim/
+data/processed/
+data/logs/
+models/
+!data/raw/riskfree/.gitkeep
+
+# окружение
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+
+# служебное
+*.tmp
+.mystem/

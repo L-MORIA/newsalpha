@@ -1,0 +1,106 @@
+# newsalpha — конфигурация по умолчанию
+# Единственный источник гиперпараметров (принцип №5 в PLAN.md).
+# Источники чисел: статья STTM (PeerJ CS 2022), патент EA044248B1,
+# reports/sestm_original_review.md.
+
+seed: 11
+
+data:
+  prices_dir: data/raw/prices
+  news_dir: data/raw/news
+  riskfree_dir: data/raw/riskfree
+  interim_dir: data/interim
+  processed_dir: data/processed
+  # недельная доходность как в статье: (close_fri - open_mon) / open_mon
+  weekly_return: fri_close_over_mon_open
+
+  news_sources:                       # приоритет: готовые корпуса → скрапинг Ъ
+    - name: lenta                     # github:yutkin/Lenta.Ru-News-Dataset
+      loader: corus
+      rubric_filter: [экономика, бизнес, финансы]
+      range: ["1999-01-01", "2019-12-31"]
+    - name: kommersant                # скрапинг рубрики 3 (экономика), этап 1b —
+      loader: scraper                 # ОСНОВНОЙ источник 2013–2021 (как в статье STTM)
+      url_template: https://www.kommersant.ru/archive/rubric/3/day/{date}
+      range: ["2013-01-01", "2021-12-31"]
+    # Выброшенные источники (см. reports/method_critique.md и лог сессии):
+    # - interfax (ODS proj_news_viz): репозиторий ods-ai-ml4sg удалён с GitHub,
+    #   зеркал нет, в Wayback только редиректы — корпус потерян;
+    # - ria (RossiyaSegodnya/ria_news_dataset): в ria.json.gz нет полей date/url
+    #   (corus.RiaRawRecord = title,text) — тайм-алигнирование невозможно.
+
+# 39 тикеров из статьи (= CSV в raw/prices)
+tickers: [AFKS, AFLT, ALRS, CBOM, CHMF, DSKY, FEES, FIVE,
+          GAZP, GMKN, HYDR, IRAO, LKOH, LSRG, MAGN, MGNT,
+          MOEX, MTSS, NLMK, NVTK, PHOR, PIKK, PLZL, POLY,
+          QIWI, ROSN, RSTI, RTKM, RUAL, SBER, SBERP, SNGS,
+          SNGSP, TATN, TATNP, TRNFP, UPRO, VTBR, YNDX]
+
+text:
+  tokenizer: razdel
+  lemmatizer: pymystem3               # патент EA044248B1
+  stopwords: nltk_russian
+  idf_quantiles: [0.05, 0.95]         # отсечение редких/частых слов
+  ner_glue: natasha                   # имена через "_", как в сэмплах авторов
+  ocr_enabled: false                  # расширение патента, опционально
+
+topics:
+  model: lda                          # lda | dtm (dtm = отдельный venv gensim 3.8)
+  dictionary_filters: {no_below: 10, no_above: 0.4}   # чистка краевых токенов
+  n_topics_search: {start: 2, stop: 50, step: 3}
+  n_topics: 20                        # ожидаемый оптимум C_v (статья)
+  passes: 10
+  dtm_enabled: false
+  itmtf_enabled: false                # опция патента EA044248B1
+
+sttm:
+  gamma: 0.05                         # значимость Пирсона для тона слова (ф. 4.x)
+  prob_mass: 0.3                      # масса топ-слов темы для pProb/nProb (ф. 5.3)
+  aggregation: sum                    # sum | mean | median
+  index_norm: sigmoid                 # → [0, 1]; сигмоид также у isomiki
+  word_tone_method: pearson           # pearson | logreg (расширение патента)
+
+evaluation:
+  cv: expanding                       # train 2013–2014 → тест следующий год … до 2021
+  cv_splits: 6
+  initial_train_years: 2
+  seeds: 10                           # mean ± std по сидам
+  report_all_splits: true             # без отбора лучших (анти-snooping)
+  granger_maxlag: 5
+  granger_alpha: 0.05
+  placebo_shifts_weeks: [-4, -2, 2, 4]
+  fdr_method: benjamini_hochberg
+  horizon_ablation_weeks: [1, 2, 4]
+  sensitivity_grid:                    # плато, а не пик (контрмера Масютину)
+    n_topics: [10, 15, 20, 25, 30]
+    prob_mass: [0.2, 0.3, 0.4]
+    gamma: [0.01, 0.05, 0.1]
+  metrics: [accuracy, f1, roc_auc, spearman_rank_corr,
+            sharpe_gross, sharpe_net, annual_return, max_drawdown]
+
+strategy:
+  position: long_only
+  top_pct: 0.20                       # топ-20% по сигналу (статья)
+  rebalance_freq: W-FRI
+  rebalance_on_change_only: true      # снижение оборота
+  commission_scenarios: [0.0, 0.0005, 0.0015]   # 0 / 0.05% / 0.15%
+  slippage: 0.001                     # 0.1% ликвидные бумаги MOEX
+  filters:                            # SESTM-практики (sestm_original_review.md §8)
+    micro_cap_breakpoint: 0.20        # аналог NYSE 20% breakpoint
+    post_earnings_days_skip: [1, 3]
+    news_max_age_days: 7
+    overnight_to_open_execution: true # ночные новости → исполнение на открытии
+  benchmarks: [IMOEX, EWI, random_signal, endogenous_rf]
+  per_ticker_calibration: true         # expit(a*signal+b) на train, опыт isomiki
+  riskfree: cbr_zcyc                   # ОФЗ, https://www.cbr.ru/eng/hd_base/zcyc_params/
+
+compute:
+  lda_device: cpu
+  embeddings_device: cuda             # ruBERT на GPU
+  n_jobs: -1                          # joblib (~2340 фитов при полном протоколе)
+
+paths:
+  models_lda: models/lda
+  doc_topic: models/doc_topic
+  sttm_indices: models/sttm_indices
+  embeddings_rubert: models/embeddings/rubert

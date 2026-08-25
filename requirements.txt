@@ -1,0 +1,39 @@
+# newsalpha — зависимости (v3.0)
+
+# Core
+pandas>=2.0
+numpy>=2.0
+scipy>=1.10
+scikit-learn>=1.3
+gensim>=4.3.3          # 4.3.0–4.3.2 несовместимы с numpy 2.x; DTM = отдельный venv с gensim 3.8
+statsmodels>=0.14      # Грейнджер, ADF
+pyyaml>=6.0
+
+# Русский NLP — стек патента EA044248B1
+pymystem3>=0.2         # обёртка над MyStem 3.x (патент EA044248B1)
+nltk>=3.8
+razdel>=0.5
+natasha>=1.6           # NER-склейка через "_"
+corus>=0.9             # загрузчики ODS proj_news_viz / Lenta / RIA
+
+# Метрики и визуализация
+quantstats>=0.0.6      # замена архивированного empyrical
+matplotlib>=3.7
+seaborn>=0.12
+
+# Данные
+pyarrow>=14.0          # parquet для interim/processed
+requests>=2.31         # MOEX ISS API
+
+# Скрапинг Коммерсанта (этап 1b)
+selenium>=4.15
+undetected-chromedriver>=3.5
+
+# Базлайн-эмбеддинги (этап 5): pip install -r requirements-embeddings.txt
+
+# Разработка
+jupyterlab>=4.0
+tqdm>=4.65
+ruff>=0.1
+pytest>=7.4
+pytest-xdist>=3.3

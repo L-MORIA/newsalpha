@@ -1,0 +1,17 @@
+README.md
+pyproject.toml
+src/newsalpha/__init__.py
+src/newsalpha.egg-info/PKG-INFO
+src/newsalpha.egg-info/SOURCES.txt
+src/newsalpha.egg-info/dependency_links.txt
+src/newsalpha.egg-info/requires.txt
+src/newsalpha.egg-info/top_level.txt
+src/newsalpha/baselines/__init__.py
+src/newsalpha/evaluation/__init__.py
+src/newsalpha/io/__init__.py
+src/newsalpha/io/fetchers.py
+src/newsalpha/strategy/__init__.py
+src/newsalpha/sttm/__init__.py
+src/newsalpha/text/__init__.py
+src/newsalpha/topics/__init__.py
+src/newsalpha/viz/__init__.py
