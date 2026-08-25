@@ -159,16 +159,24 @@ F821 в kommersant.py исправлен, тесты пересобраны с �
 - [ ] Прогон baselines на Lenta-индексах (run_baselines.py).
 
 ### Этап 6. Оценка (`src/newsalpha/evaluation`) ✅ (ядро)
-Грейнджер maxlag=5 (+ADF); **placebo ±k недель** (заготовка, требует rebuild streams);
-**Benjamini-Hochberg FDR** для доли значимых акций; абляция горизонта 1/2/4 недели;
-метрики направления Acc/F1/AUC/Spearman; **полный кросс-секционный грид чувствительности**
-{γ}×{prob_mass} — критерий «плато, а не острый пик».
-**Готово:** granger.py, direction.py, fdr.py, sensitivity.py (per-ticker sttm_expanding →
-кросс-секционный backtest top-20%) + run_evaluation.py + 10 тестов.
-Результат на Lenta (25.08.2026): Granger lag1 p=0.008 (значим), Direction Acc=0.42
+Грейнджер maxlag=5 (+ADF); **placebo на панели тикеров** (50–100 сидов,
+кросс-секционный backtest); **Benjamini-Hochberg FDR** для доли значимых акций;
+абляция горизонта 1/2/4 недели; метрики направления Acc/F1/AUC/Spearman;
+**полный кросс-секционный грид чувствительности** {γ}×{prob_mass} — критерий
+«плато, а не острый пик».
+**Готово:** granger.py, direction.py, fdr.py, sensitivity.py, placebo.py (кросс-секционный
+дизайн v2) + run_evaluation.py + 21 тест.
+
+Результат на **Lenta** (25.08.2026): Granger lag1 p=0.008 (значим), Direction Acc=0.42
 (случайный 0.50 — индекс контринтуитивен, Spearman −0.12), FDR 0/38 после BH,
 Sensitivity **PLATEAU** (Sharpe 0.60–0.88, нет острого пика; топ γ=0.08 pm=0.40 →
-gross=0.876 net=0.846). Placebo (100 сидов) — запускать отдельно, требует rebuild theta/c_words.
+gross=0.876 net=0.846).
+
+Результат на **Kommersant** (25.08.2026): Granger lag1 p=0.263 (незначим),
+Direction Acc=0.551, Spearman −0.054 (Kommersant vs Lenta: Acc 0.551 vs 0.42),
+FDR 0/39 после BH, Sensitivity **PLATEAU** (Sharpe 1.16–1.42, топ γ=0.05 pm=0.30
+→ gross=1.420 net=1.420). **Placebo (50 сидов): z=−0.16, p=0.50, NOT SIGNIFICANT.**
+Sharpe = свойство кросс-секционного отбора, не предсказания новостями.
 
 ### Этап 7. Стратегия (`src/newsalpha/strategy`) ✅ (ядро)
 Long-only топ-20%, недельная ребалансировка. Комиссии {0; 0.05%; 0.15%} + slippage 0.1%;
@@ -188,6 +196,17 @@ STTM ниже случайного, z ≈ −2. Чекпойнт статьи (1
 Решающий аргумент за прогон на Ъ: либо воспроизведение ~1.37 валидирует пайплайн,
 либо независимая реализация опровергает результат статьи. Оба исхода фиксируем.
 (Отозванные числа первой версии — level 1.00 / delta 1.06, z≈+1.3 — продукт бага осей.)
+
+**Результат на Kommersant (25.08.2026):** gross Sharpe **1.42** (статья: 1.37 ± 0.09) ✅;
+net_0.15% **1.37**; оборот **0.125**/нед; maxDD −22.0%; 316 недель. Sensitivity **PLATEAU**
+(Sharpe 1.16–1.42, нет острого пика). FDR **0/39** после BH.
+Placebo (50 сидов): real Sharpe 1.42 vs placebo mean 1.48 ± 0.36 → **z = −0.16, p = 0.50,
+NOT SIGNIFICANT**. Sharpe определяется кросс-секционным отбором топ-20%, а не новостями.
+Endogenous LR (AR(5)): Acc=0.516, Spearman=+0.068 (STTM: Acc=0.551, Spearman=−0.054).
+**Научный вывод:** метод воспроизводит статью формально (Sharpe 1.42), но статистически
+неотличим от случайного кросс-секционного отбора. Новостная компонента не добавляет
+предиктивной силы поверх ценового AR(5).
+См. `findings/placebo_kommersant_2026-08-25.md` и `findings/endogenous_kommersant_2026-08-25.md`.
 
 ### Этап 8. Воспроизводимость 🔄 (в процессе)
 - [x] `run_all.py` 5-стадийный пайплайн с `--skip-*` флагами. ✅ 25.08
