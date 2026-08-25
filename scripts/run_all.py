@@ -67,9 +67,9 @@ def main():
     cfg = args.config
 
     print(f"{'#'*60}")
-    print(f"  newsalpha — полный пайплайн STTM")
+    print("  newsalpha — полный пайплайн STTM")
     print(f"  source: {src} | config: {cfg}")
-    print(f"  seed: проверьте config/default.yaml → seed")
+    print("  seed: проверьте config/default.yaml → seed")
     print(f"{'#'*60}")
 
     t_start = time.time()

@@ -24,16 +24,14 @@ from newsalpha.baselines.sestm import (
     compute_p_score,
     sestm_expanding,
 )
-from newsalpha.io.market import load_all_tickers, weekly_returns
-from newsalpha.sttm.core import load_corpus
-from newsalpha.sttm.pipeline import build_streams, sttm_expanding
+from newsalpha.io.market import load_all_tickers
 
 
 ROOT = Path(__file__).resolve().parent.parent
 
 
 def load_doc_term(source: str):
-    """Загрузить doc-term матрицу из чекпойнтов LDA."""
+    """Загрузить doc-topic матрицу из чекпойнтов LDA."""
     if source == "lenta":
         dt_path = ROOT / "models" / "doc_topic" / "doc_topic_lenta.parquet"
     elif source == "kommersant":
@@ -45,26 +43,27 @@ def load_doc_term(source: str):
         raise FileNotFoundError(f"Doc-topic matrix not found: {dt_path}")
 
     df = pd.read_parquet(dt_path)
-    doc_term = df.values[:, :-1]  # Exclude topic column
+    doc_term = df.values  # all columns are topic weights [n_docs x n_topics]
     doc_names = df.index.tolist()
     return doc_term, doc_names
 
 
 def load_documents(source: str):
-    """Загрузить документы с датами и тикерами."""
+    """Загрузить документы с датами и тикерами из preprocessed parquet."""
     if source == "lenta":
-        corpus_path = ROOT / "data" / "processed" / "corpus_lenta.json"
+        preproc_path = ROOT / "data" / "processed" / "news_lenta_preproc.parquet"
     elif source == "kommersant":
-        corpus_path = ROOT / "data" / "processed" / "corpus_kommersant.json"
+        preproc_path = ROOT / "data" / "processed" / "news_kommersant_preproc.parquet"
     else:
         raise ValueError(f"Unknown source: {source}")
 
-    with open(corpus_path, "r", encoding="utf-8") as f:
-        documents = json.load(f)
+    if not preproc_path.exists():
+        raise FileNotFoundError(f"Preprocessed data not found: {preproc_path}")
 
-    dates = [doc["date"] for doc in documents]
-    tickers = [doc.get("ticker", "ALL") for doc in documents]
-    doc_names = [doc["name"] for doc in documents]
+    df = pd.read_parquet(preproc_path, columns=["date", "preproc"])
+    dates = df["date"].astype(str).tolist()
+    tickers = ["ALL"] * len(df)
+    doc_names = df.index.astype(str).tolist()
 
     return doc_names, dates, tickers
 
@@ -75,9 +74,9 @@ def run_endogenous(source: str):
 
     # Load data
     prices_dir = ROOT / "data" / "raw" / "prices"
-    tickers = ["SBER", "GAZP", "LKOH", "GMKN", "YNDX"]
+    tickers = [p.name.replace("shares_TQBR_", "").replace(".csv", "")
+               for p in sorted(prices_dir.glob("shares_TQBR_*.csv"))]
     returns = load_all_tickers(prices_dir, tickers)
-    returns = weekly_returns(returns)
 
     # Run baselines
     results = endogenous_baseline(returns, lags=5, horizon=1, min_train=104)
@@ -114,9 +113,9 @@ def run_sestm(source: str):
 
     # Load data
     prices_dir = ROOT / "data" / "raw" / "prices"
-    tickers = ["SBER", "GAZP", "LKOH", "GMKN", "YNDX"]
+    tickers = [p.name.replace("shares_TQBR_", "").replace(".csv", "")
+               for p in sorted(prices_dir.glob("shares_TQBR_*.csv"))]
     returns = load_all_tickers(prices_dir, tickers)
-    returns = weekly_returns(returns)
 
     # Load documents
     doc_names, dates, doc_tickers = load_documents(source)

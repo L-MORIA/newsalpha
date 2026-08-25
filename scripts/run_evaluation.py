@@ -90,11 +90,11 @@ def main():
     for _, row in per_t.head(5).iterrows():
         print(f"  {row['ticker']}: ρ={row['rho']:.3f}, p={row['pvalue']:.4f}")
 
-    # --- 4. Sensitivity grid ---
-    print("\n--- 4. Sensitivity Grid ---")
+    # --- Load streams (shared by sensitivity + placebo) ---
     lda_path = ROOT / "models" / "lda" / source
     preproc_path = Path(cfg["data"]["processed_dir"]) / f"news_{source}_preproc.parquet"
     doc_topic_path = ROOT / cfg["paths"]["doc_topic"] / f"doc_topic_{source}.parquet"
+    theta = c_words = tw = vocab = cal_weeks = None
 
     if ((lda_path / "lda_k32.model").exists()
             and preproc_path.exists()
@@ -111,14 +111,17 @@ def main():
         theta, c_words, cal_weeks = build_streams(doc_topic, docs_tokens, df_pre["date"], vocab)
         del docs_tokens
 
-        tickers_list = cfg["tickers"]
+    # --- 4. Sensitivity grid ---
+    print("\n--- 4. Sensitivity Grid ---")
+    if theta is not None:
+        cost_val = cfg.get("strategy", {}).get("commission_scenarios", [0.0005])[0]
         grid = sensitivity_grid(
             wret, theta, c_words, vocab, cal_weeks,
             topic_word_lists_override=tw,
             gammas=[0.01, 0.03, 0.05, 0.08, 0.10],
             prob_masses=[0.15, 0.20, 0.30, 0.40],
             first_test_year=2015,
-            cost=cfg.get("strategy", {}).get("cost", 0.0005),
+            cost=cost_val,
             initial_train_years=cfg.get("evaluation", {}).get("initial_train_years", 2),
             index_norm=cfg.get("sttm", {}).get("index_norm", "sigmoid"),
         )
@@ -139,9 +142,27 @@ def main():
     else:
         print("  Skipped (LDA model or preproc data not found)")
 
-    # --- 5. Placebo (lightweight: 20 sims) ---
+    # --- 5. Placebo ---
     print(f"\n--- 5. Placebo ({args.placebo_sims} sims) ---")
-    print("  (skipping full placebo — requires rebuilding streams, run separately)")
+    if theta is not None:
+        from newsalpha.evaluation.placebo import placebo_test
+        pbt = placebo_test(
+            wret, theta, c_words, tw, vocab, cal_weeks,
+            n_sims=args.placebo_sims,
+            gamma=args.gamma,
+            prob_mass=args.prob_mass,
+            first_test_year=2015,
+            initial_train_years=cfg.get("evaluation", {}).get("initial_train_years", 2),
+            top_pct=0.20,
+            cost=cost_val,
+            index_norm=cfg.get("sttm", {}).get("index_norm", "sigmoid"),
+        )
+        print(f"  Real Sharpe: {pbt['real_sharpe']:.3f}")
+        print(f"  Placebo mean: {pbt['placebo_mean']:.3f} ± {pbt['placebo_std']:.3f}")
+        print(f"  z-score: {pbt['z_score']:.2f}, p-value: {pbt['p_value']:.4f}")
+        print(f"  => {pbt['conclusion']}")
+    else:
+        print("  Skipped (LDA streams not loaded)")
 
     # --- Save report ---
     report = {

@@ -75,7 +75,10 @@ def backtest(
         rows.append(row)
         prev_w = w_use
 
-    return pd.DataFrame(rows).set_index("week")
+    df = pd.DataFrame(rows)
+    if df.empty:
+        return pd.DataFrame(columns=["gross", "turnover"])
+    return df.set_index("week")
 
 
 def summarize(port: pd.Series, periods_per_year: int = 52) -> dict:
