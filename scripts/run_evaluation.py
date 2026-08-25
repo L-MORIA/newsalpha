@@ -113,21 +113,27 @@ def main():
 
         tickers_list = cfg["tickers"]
         grid = sensitivity_grid(
-            stock_ret, theta, c_words, vocab, cal_weeks,
+            wret, theta, c_words, vocab, cal_weeks,
             topic_word_lists_override=tw,
             gammas=[0.01, 0.03, 0.05, 0.08, 0.10],
             prob_masses=[0.15, 0.20, 0.30, 0.40],
             first_test_year=2015,
+            cost=cfg.get("strategy", {}).get("cost", 0.0005),
+            initial_train_years=cfg.get("evaluation", {}).get("initial_train_years", 2),
+            index_norm=cfg.get("sttm", {}).get("index_norm", "sigmoid"),
         )
         diag = plateau_diagnosis(grid)
-        print(f"  Peak |rho|: {diag['peak_rho']:.3f}")
-        print(f"  Median |rho|: {diag['median_rho']:.3f}")
-        print(f"  Q25: {diag['q25_rho']:.3f}")
+        print(f"  Peak gross Sharpe: {diag.get('peak_gross_sharpe', 'N/A')}")
+        print(f"  Median gross Sharpe: {diag.get('median_gross_sharpe', 'N/A')}")
+        print(f"  Q25: {diag.get('q25_gross_sharpe', 'N/A')}")
         print(f"  => {diag['verdict']}")
-        top5 = grid.nlargest(5, "spearman_rho", keep="first")
+        top5 = grid.nlargest(5, "gross_sharpe", keep="first")
         print("  Top-5 configs:")
         for _, row in top5.iterrows():
-            print(f"    g={row['gamma']:.2f}, pm={row['prob_mass']:.2f} -> rho={row['spearman_rho']:.3f} (p={row['spearman_pvalue']:.4f})")
+            print(f"    g={row['gamma']:.2f}, pm={row['prob_mass']:.2f} "
+                  f"-> gross={row['gross_sharpe']:.3f} "
+                  f"net={row['net_sharpe']:.3f} "
+                  f"frac_rho+={row.get('frac_tickers_positive_rho', 0):.0%}")
         (ROOT / "data" / "processed").mkdir(parents=True, exist_ok=True)
         grid.to_csv(ROOT / "data" / "processed" / f"sensitivity_grid_{source}.csv", index=False)
     else:
