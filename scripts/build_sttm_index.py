@@ -64,12 +64,16 @@ def main():
     for t in tickers:
         r = rets[t]
         r.index = pd.to_datetime(r.index)
+        # протокол статьи: 2 календарных года train от НАЧАЛА торгов тикера
+        first_valid = r.dropna().index.min()
+        fty = None if pd.isna(first_valid) else int(first_valid.year)
         idx = sttm_expanding(
             r, theta, c_words, tw_lists, vocab, weeks,
             gamma=sttm_cfg["gamma"],
             prob_mass=sttm_cfg["prob_mass"],
             initial_train_years=eval_cfg["initial_train_years"],
             norm=sttm_cfg["index_norm"],
+            first_test_year=None if fty is None else fty + eval_cfg["initial_train_years"],
         )
         out[t] = idx
         aligned = pd.concat([idx.rename("idx"), r.rename("ret")], axis=1).dropna()

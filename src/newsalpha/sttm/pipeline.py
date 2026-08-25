@@ -60,28 +60,31 @@ def sttm_expanding(
     prob_mass: float = 0.3,
     initial_train_years: int = 2,
     norm: str = "sigmoid",
+    first_test_year: int | None = None,
 ) -> pd.Series:
     """Expanding-CV индекс одного тикера.
 
-    На каждом календарном году Y ≥ первый+initial_train_years тональности
-    оцениваются только по неделям с годом < Y и валидной доходностью;
-    индекс тестового года считается на этих тональностях.
+    На каждом календарном году Y тональности оцениваются только по неделям
+    с годом < Y и валидной доходностью; индекс тестового года считается на
+    этих тональностях. first_test_year задаёт нижнюю границу тестовых лет
+    (иначе первый год потока + initial_train_years).
     Возврат: Series[week] = индекс тестовых недель.
     """
     ret_by_week = returns.to_dict()
     r_vec = np.array([ret_by_week.get(w, np.nan) for w in weeks])
     week_years = np.array([w.year for w in weeks])
 
+    start = first_test_year or int(week_years.min() + initial_train_years)
     out = {}
-    first_year = week_years.min()
-    for test_year in range(first_year + initial_train_years, week_years.max() + 1):
+    for test_year in range(start, week_years.max() + 1):
         train_mask = (week_years < test_year) & ~np.isnan(r_vec)
         if train_mask.sum() < 8:
             continue
         f_w = word_tone_matrix(c_words[:, train_mask], r_vec[train_mask], gamma=gamma)
         f_topics = _topic_tones(tw_lists, f_w, vocab, prob_mass)
         test_mask = week_years == test_year
-        idx = stock_index(theta[:, test_mask] * f_topics[:, None], norm=norm)
+        # [недели × темы]: агрегация Σ_j внутри stock_index идёт по оси 1
+        idx = stock_index((theta[:, test_mask] * f_topics[:, None]).T, norm=norm)
         for w, v in zip(np.array(weeks)[test_mask], idx):
             out[w] = v
     return pd.Series(out, name="sttm_index").sort_index()
