@@ -21,14 +21,14 @@ python -c "import nltk; nltk.download('stopwords')"
 #    Цены MOEX TQBR уже в data/raw/prices/
 
 # 3. Пайплайн по стадиям (каждая читает config/default.yaml)
-python scripts/fetch_news.py      # скачивание готовых корпусов
-python scripts/preprocess.py
-python scripts/train_topics.py
-python scripts/build_index.py     # ядро STTM
-python scripts/backtest.py
+python scripts/fetch_news.py          # готовые корпуса (Lenta, RIA)
+python scripts/fetch_kommersant.py    # скрапинг Ъ 2013–2021 (resume-безопасен)
+python scripts/preprocess_news.py     # лемматизация + NER
+python scripts/train_topics.py        # LDA + грид по C_v
+python scripts/build_sttm_index.py    # ядро STTM → недельные индексы
+python scripts/run_backtest.py        # портфель топ-20% + издержки
 
-# Или всё сразу:
-python scripts/run_all.py
+# run_all.py — в разработке (PLAN.md, Этап 8); пока стадии запускаются по одной
 ```
 
 ## Структура
@@ -36,8 +36,9 @@ python scripts/run_all.py
 ```
 config/default.yaml   ← все гиперпараметры
 data/raw|interim|processed
-src/newsalpha/        ← пакет: io text topics sttm baselines evaluation strategy viz
-scripts/              ← argparse-CLI по стадиям + run_all.py
+src/newsalpha/        ← пакет: io text topics sttm backtest (baselines evaluation
+                        strategy viz — каркасы под этапы 5–7)
+scripts/              ← argparse-CLI по стадиям (run_all.py — Этап 8)
 notebooks/ tests/ reports/ models/
 ```
 
