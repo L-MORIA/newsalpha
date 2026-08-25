@@ -58,6 +58,8 @@ def backtest(
         if w is None:
             continue
         t_next = weeks[i + 1]
+        if t_next not in rets.index:
+            continue
         r_next = rets.loc[t_next].reindex(w.index)
         valid = r_next.notna()
         if not valid.any():
