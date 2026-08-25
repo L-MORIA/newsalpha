@@ -1,0 +1,49 @@
+{
+  "LogisticRegression": {
+    "accuracy": 0.539,
+    "spearman": 0.108,
+    "n_tickers": 10,
+    "time_sec": 2.0
+  },
+  "RidgeClassifier": {
+    "accuracy": 0.491,
+    "spearman": null,
+    "n_tickers": 10,
+    "time_sec": 1.6
+  },
+  "RandomForest": {
+    "accuracy": 0.509,
+    "spearman": 0.056,
+    "n_tickers": 10,
+    "time_sec": 33.9
+  },
+  "GradientBoosting": {
+    "accuracy": 0.511,
+    "spearman": 0.037,
+    "n_tickers": 10,
+    "time_sec": 44.2
+  },
+  "SVM-RBF": {
+    "accuracy": 0.513,
+    "spearman": 0.041,
+    "n_tickers": 10,
+    "time_sec": 202.5
+  },
+  "SESTM-level": {
+    "gross_sharpe": 0.236,
+    "net_0.05_sharpe": 0.102,
+    "net_0.15_sharpe": -0.165,
+    "source": "Lenta"
+  },
+  "SESTM-delta": {
+    "gross_sharpe": 0.537,
+    "net_0.05_sharpe": 0.393,
+    "net_0.15_sharpe": 0.108,
+    "source": "Lenta"
+  },
+  "STTM-level-Lenta": {
+    "gross_sharpe": 0.68,
+    "net_0.05_sharpe": 0.66,
+    "note": "from previous run"
+  }
+}
