@@ -48,7 +48,7 @@ topics:
   model: lda                          # lda | dtm (dtm = отдельный venv gensim 3.8)
   dictionary_filters: {no_below: 10, no_above: 0.4}   # чистка краевых токенов
   n_topics_search: {start: 2, stop: 50, step: 3}
-  n_topics: 20                        # ожидаемый оптимум C_v (статья)
+  n_topics: 20                        # fallback; фактический best_k из best.json (Ъ=50, Lenta=32)
   passes: 10
   dtm_enabled: false
   itmtf_enabled: false                # опция патента EA044248B1

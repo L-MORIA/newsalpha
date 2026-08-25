@@ -96,20 +96,30 @@ def main():
     doc_topic_path = ROOT / cfg["paths"]["doc_topic"] / f"doc_topic_{source}.parquet"
     theta = c_words = tw = vocab = cal_weeks = None
 
-    if ((lda_path / "lda_k32.model").exists()
-            and preproc_path.exists()
+    if (preproc_path.exists()
             and doc_topic_path.exists()):
         from gensim.models import LdaMulticore
         from gensim.corpora import Dictionary
-        lda = LdaMulticore.load(str(lda_path / "lda_k32.model"))
-        dictionary = Dictionary.load(str(lda_path / "dictionary.dict"))
-        vocab = dictionary.token2id
-        tw = topic_word_lists(lda, topn=40)
-        df_pre = pd.read_parquet(preproc_path, columns=["date", "preproc"])
-        doc_topic = pd.read_parquet(doc_topic_path).to_numpy()
-        docs_tokens = [s.split() for s in df_pre["preproc"]]
-        theta, c_words, cal_weeks = build_streams(doc_topic, docs_tokens, df_pre["date"], vocab)
-        del docs_tokens
+
+        best_json = lda_path / "best.json"
+        if best_json.exists():
+            with open(best_json, encoding="utf-8") as f:
+                best_k = json.load(f)["best_k"]
+        else:
+            best_k = 32
+        lda_model_path = lda_path / f"lda_k{best_k}.model"
+        if not lda_model_path.exists():
+            print(f"  Skipped (LDA model not found: {lda_model_path})")
+        else:
+            lda = LdaMulticore.load(str(lda_model_path))
+            dictionary = Dictionary.load(str(lda_path / "dictionary.dict"))
+            vocab = dictionary.token2id
+            tw = topic_word_lists(lda, topn=40)
+            df_pre = pd.read_parquet(preproc_path, columns=["date", "preproc"])
+            doc_topic = pd.read_parquet(doc_topic_path).to_numpy()
+            docs_tokens = [s.split() for s in df_pre["preproc"]]
+            theta, c_words, cal_weeks = build_streams(doc_topic, docs_tokens, df_pre["date"], vocab)
+            del docs_tokens
 
     # --- 4. Sensitivity grid ---
     print("\n--- 4. Sensitivity Grid ---")
