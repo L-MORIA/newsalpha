@@ -64,6 +64,7 @@ evaluation:
   cv: expanding                       # train 2013–2014 → тест следующий год … до 2021
   cv_splits: 6
   initial_train_years: 2
+  protocol_start: "2013-01-01"        # календарь статьи; не зависит от корпуса (Lenta=1999)
   seeds: 10                           # mean ± std по сидам
   report_all_splits: true             # без отбора лучших (анти-snooping)
   granger_maxlag: 5

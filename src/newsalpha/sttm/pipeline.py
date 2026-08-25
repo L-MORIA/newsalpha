@@ -12,6 +12,7 @@ from newsalpha.sttm.core import (
     stock_index,
     topic_stream,
     topic_tone,
+    tts,
     word_stream,
     word_tone_matrix,
 )
@@ -60,31 +61,35 @@ def sttm_expanding(
     prob_mass: float = 0.3,
     initial_train_years: int = 2,
     norm: str = "sigmoid",
-    first_test_year: int | None = None,
+    first_test_year: int = 2015,
 ) -> pd.Series:
     """Expanding-CV индекс одного тикера.
 
-    На каждом календарном году Y тональности оцениваются только по неделям
-    с годом < Y и валидной доходностью; индекс тестового года считается на
-    этих тональностях. first_test_year задаёт нижнюю границу тестовых лет
-    (иначе первый год потока + initial_train_years).
+    На каждом календарном году Y ≥ first_test_year тональности оцениваются
+    только по неделям с годом < Y и валидной доходностью; индекс тестового
+    года считается на этих тональностях.
+
+    first_test_year ОБЯЗАТЕЛЕН явным числом: глобальный календарь протокола
+    статьи = год начала данных + initial_train_years (2013+2=2015). Поздно
+    листингованные тикеры отсекаются гейтом min train-недель, а не сдвигом
+    календаря. Дефолт-вычисление от потока маскировало регрессию (recheck
+    Mavis 2026-08-25, находка №3).
     Возврат: Series[week] = индекс тестовых недель.
     """
     ret_by_week = returns.to_dict()
     r_vec = np.array([ret_by_week.get(w, np.nan) for w in weeks])
     week_years = np.array([w.year for w in weeks])
 
-    start = first_test_year or int(week_years.min() + initial_train_years)
     out = {}
-    for test_year in range(start, week_years.max() + 1):
+    for test_year in range(first_test_year, week_years.max() + 1):
         train_mask = (week_years < test_year) & ~np.isnan(r_vec)
         if train_mask.sum() < 8:
             continue
         f_w = word_tone_matrix(c_words[:, train_mask], r_vec[train_mask], gamma=gamma)
         f_topics = _topic_tones(tw_lists, f_w, vocab, prob_mass)
         test_mask = week_years == test_year
-        # [недели × темы]: агрегация Σ_j внутри stock_index идёт по оси 1
-        idx = stock_index((theta[:, test_mask] * f_topics[:, None]).T, norm=norm)
+        # tts даёт [недели × темы]; агрегация Σ_j внутри stock_index идёт по оси 1
+        idx = stock_index(tts(theta[:, test_mask], f_topics), norm=norm)
         for w, v in zip(np.array(weeks)[test_mask], idx):
             out[w] = v
     return pd.Series(out, name="sttm_index").sort_index()

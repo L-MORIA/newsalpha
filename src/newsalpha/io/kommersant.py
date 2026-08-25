@@ -8,6 +8,7 @@
 Сырые данные: один JSONL на день, data/raw/news/kommersant/kommersant_YYYY-MM-DD.jsonl.
 Файл пишется атомарно после полного успеха по дню — resume бесплатный.
 """
+from __future__ import annotations
 import json
 import random
 import re
@@ -15,6 +16,7 @@ import time
 from datetime import date, timedelta
 from pathlib import Path
 
+import pandas as pd
 import requests
 
 UA = (
@@ -161,7 +163,7 @@ def scrape_day(day: date, out_dir: Path, delay: float = 0.6) -> int:
     return kept
 
 
-def load_days_to_df(raw_dir: str | Path) -> "pd.DataFrame":  # type: ignore[name-defined]
+def load_days_to_df(raw_dir: str | Path) -> pd.DataFrame:
     """Дневные JSONL → DataFrame единой схемы interim (date,source,title,text,url,rubric).
 
     Строки с error (нет страницы/времени) пропускаются; дедупликация по doc_id.
