@@ -5,7 +5,13 @@ DOI 10.7717/peerj-cs.1156) и его первоисточника **SESTM** (Ke/
 тематическое моделирование новостного потока → тональность тем → недельный сигнал →
 long-only портфель топ-20% акций MOEX.
 
-Отличие от других реализаций: издержки и placebo-тесты с первого прогона,
+> ## ⚠️ Итог: воспроизвели — опровергли
+>
+> Формальное воспроизведение удалось (gross Sharpe 1.22 при 1.37 ± 0.09 в статье), **но пять независимых тестов показали, что Sharpe — артефакт кросс-секционного отбора, а не новостная альфа**: placebo p = 0.50; AR(5) по цене не хуже; out-of-sample 2022–2026 Sharpe −0.23; long-short net Sharpe 0.064 (≈ placebo); STTM ≈ random top-20%.
+>
+> Полный разбор с цифрами и кодом — **[STTM_reproduction_negative_result.md](experiments/longshort/STTM_reproduction_negative_result.md)**.
+
+Методологическая гигиена: издержки и placebo-тесты с первого прогона,
 отчёт по всем моделям без отбора лучших, протокол 10 сидов.
 
 ## Быстрый старт
@@ -28,7 +34,7 @@ python scripts/train_topics.py        # LDA + грид по C_v
 python scripts/build_sttm_index.py    # ядро STTM → недельные индексы
 python scripts/run_backtest.py        # портфель топ-20% + издержки
 
-# run_all.py — в разработке (PLAN.md, Этап 8); пока стадии запускаются по одной
+# или всё сразу: python scripts/run_all.py --source kommersant
 ```
 
 ## Структура
@@ -44,6 +50,8 @@ notebooks/ tests/ reports/ models/
 
 Подробности — в [PLAN.md](PLAN.md) (v3.0): принципы архитектуры, этапы 0–8,
 протокол экспериментов, чекпойнты воспроизведения.
+
+Итоговый отчёт со всеми цифрами и тестами — [STTM_reproduction_negative_result](experiments/longshort/STTM_reproduction_negative_result.md).
 
 ## Ключевые источники
 
