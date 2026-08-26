@@ -1,0 +1,42 @@
+{
+  "long_only": {
+    "gross_sharpe": 1.2173642455566698,
+    "net_0.0005_sharpe": 1.1984103753388573,
+    "net_0.0015_sharpe": 1.1604462771201904,
+    "ann_return": 0.2129776562347201,
+    "ann_vol": 0.17494982049298713,
+    "mean_turnover": 0.12847358121330724
+  },
+  "long_short": {
+    "gross_sharpe": 0.2623766066157193,
+    "net_sharpe": 0.06446511589136801,
+    "ann_return_gross": 0.040740156705876586,
+    "ann_return_net": 0.010018434592373619,
+    "ann_vol": 0.15527358643503314,
+    "max_drawdown": -0.265444040246821,
+    "mean_turnover": 0.2908023483365949
+  },
+  "placebo": {
+    "real_sharpe": 0.2623766066157193,
+    "real_sharpe_net": 0.06446511589136801,
+    "placebo_mean": 0.40566145144706506,
+    "placebo_std": 0.24419529335060547,
+    "placebo_median": 0.4063760025359706,
+    "placebo_95ci": [
+      0.02941614994870105,
+      0.9462724811138652
+    ],
+    "placebo_net_mean": 0.21187016001877737,
+    "z_score": -0.58676333546537,
+    "p_value": 0.68,
+    "n_sims": 50,
+    "conclusion": "NOT SIGNIFICANT"
+  },
+  "config": {
+    "long_pct": 0.2,
+    "short_pct": 0.2,
+    "cost_rate": 0.001,
+    "borrow_rate_weekly": 0.0003,
+    "n_sims": 50
+  }
+}

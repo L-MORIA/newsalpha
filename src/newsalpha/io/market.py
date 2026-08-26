@@ -22,6 +22,13 @@ def weekly_returns(df: pd.DataFrame, date_col: str = "TRADEDATE") -> pd.Series:
     return (last_close - first_open) / first_open
 
 
+def daily_returns(df: pd.DataFrame, date_col: str = "TRADEDATE") -> pd.Series:
+    """Дневные OHLC → серия дневных доходностей (ret = (close - open) / open)."""
+    s = df.set_index(date_col)["CLOSE"] / df.set_index(date_col)["OPEN"] - 1
+    s.index = pd.to_datetime(s.index)
+    return s.dropna()
+
+
 def load_all_tickers(
     prices_dir: str | Path, tickers: list[str], board: str = "TQBR"
 ) -> pd.DataFrame:
@@ -32,4 +39,17 @@ def load_all_tickers(
         if not path.exists():
             raise FileNotFoundError(path)
         out[t] = weekly_returns(load_ticker_csv(path))
+    return pd.DataFrame(out)
+
+
+def load_all_tickers_daily(
+    prices_dir: str | Path, tickers: list[str], board: str = "TQBR"
+) -> pd.DataFrame:
+    """Все тикеры → широкая матрица [дни × тикеры] дневных доходностей."""
+    out = {}
+    for t in tickers:
+        path = Path(prices_dir) / f"shares_{board}_{t}.csv"
+        if not path.exists():
+            raise FileNotFoundError(path)
+        out[t] = daily_returns(load_ticker_csv(path))
     return pd.DataFrame(out)

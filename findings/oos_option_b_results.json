@@ -1,0 +1,12 @@
+{
+  "option": "B",
+  "description": "LDA k=50 on full corpus 2013-2026",
+  "gross_sharpe": -0.23187814967916553,
+  "ann_return": -0.06317734855610041,
+  "ann_vol": 0.2724592577761843,
+  "max_drawdown": -0.4554022312491186,
+  "n_weeks": 239,
+  "mean_turnover": 0.22504482964734007,
+  "mean_n_stocks": 7.677824267782427,
+  "mean_spearman": 0.02011263897235552
+}

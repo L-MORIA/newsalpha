@@ -50,6 +50,53 @@ def _topic_tones(tw_lists, f_w, vocab, prob_mass):
     )
 
 
+def build_streams_daily(
+    doc_topic: np.ndarray,
+    docs_tokens: list[list[str]],
+    dates: pd.Series,
+    vocab: dict[str, int],
+) -> tuple[np.ndarray, np.ndarray, list[pd.Timestamp]]:
+    """Θ[темы × дни], c[слова × дни], список дат (календарь потоков, дневной)."""
+    dates_pd = pd.to_datetime(dates)
+    labels = sorted(pd.unique(dates_pd))
+    day_idx = dates_pd.map({d: i for i, d in enumerate(labels)}).to_numpy()
+    theta = topic_stream(doc_topic, day_idx, len(labels))
+    c = word_stream(docs_tokens, vocab, len(labels), day_idx)
+    return theta, c, [pd.Timestamp(d) for d in labels]
+
+
+def sttm_expanding_daily(
+    returns: pd.Series,
+    theta: np.ndarray,
+    c_words: np.ndarray,
+    tw_lists: list[list[tuple[str, float]]],
+    vocab: dict[str, int],
+    days: list[pd.Timestamp],
+    gamma: float = 0.05,
+    prob_mass: float = 0.3,
+    initial_train_years: int = 2,
+    norm: str = "sigmoid",
+    first_test_year: int = 2015,
+) -> pd.Series:
+    """Expanding-CV индекс одного тикера (дневная частота)."""
+    ret_by_day = returns.to_dict()
+    r_vec = np.array([ret_by_day.get(d, np.nan) for d in days])
+    day_years = np.array([d.year for d in days])
+
+    out = {}
+    for test_year in range(first_test_year, day_years.max() + 1):
+        train_mask = (day_years < test_year) & ~np.isnan(r_vec)
+        if train_mask.sum() < 20:
+            continue
+        f_w = word_tone_matrix(c_words[:, train_mask], r_vec[train_mask], gamma=gamma)
+        f_topics = _topic_tones(tw_lists, f_w, vocab, prob_mass)
+        test_mask = day_years == test_year
+        idx = stock_index(tts(theta[:, test_mask], f_topics), norm=norm)
+        for d, v in zip(np.array(days)[test_mask], idx):
+            out[d] = v
+    return pd.Series(out, name="sttm_index").sort_index()
+
+
 def sttm_expanding(
     returns: pd.Series,
     theta: np.ndarray,
