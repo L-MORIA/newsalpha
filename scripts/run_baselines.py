@@ -8,11 +8,15 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 import time
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
+
+ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT / "src"))
 
 from newsalpha.baselines.endogenous import (
     endogenous_baseline,
@@ -25,9 +29,6 @@ from newsalpha.baselines.sestm import (
     sestm_expanding,
 )
 from newsalpha.io.market import load_all_tickers
-
-
-ROOT = Path(__file__).resolve().parent.parent
 
 
 def load_doc_term(source: str):

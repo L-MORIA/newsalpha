@@ -75,7 +75,7 @@ def main():
     t_start = time.time()
     stages = [
         ("preprocess_news", [python, "scripts/preprocess_news.py",
-                             "--config", cfg, "--source", src], args.skip_preproc),
+                             "--config", cfg, "--sources", src], args.skip_preproc),
         ("train_topics", [python, "scripts/train_topics.py",
                           "--config", cfg, "--source", src], args.skip_topics),
         ("build_sttm_index", [python, "scripts/build_sttm_index.py",

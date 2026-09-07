@@ -154,6 +154,14 @@ def sestm_expanding(
 
     words = [f"w{i}" for i in range(doc_term.shape[1])]
 
+    doc_set = set(np.asarray(doc_tickers).tolist())
+    if not (doc_set & set(returns_panel.columns)):
+        raise ValueError(
+            "sestm_expanding: ни одна статья не привязана к тикерам из returns_panel "
+            f"(уникальных doc_tickers: {len(doc_set)}, пример: {list(doc_set)[:5]}); "
+            "per-ticker сигналы построить нельзя — нужна разметка статей по тикерам"
+        )
+
     all_weeks = []
     all_tickers = []
     all_scores = []

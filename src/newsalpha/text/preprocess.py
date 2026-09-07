@@ -83,7 +83,7 @@ class Preprocessor:
             subprocess.run(
                 [self._bin, "--format", "json", "-c", fin, fout],
                 check=True,
-                creationflags=subprocess.CREATE_NO_WINDOW,
+                creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
             )
             with open(fout, encoding="utf-8") as f:
                 for line_no, line in enumerate(f):

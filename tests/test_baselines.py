@@ -10,9 +10,10 @@ from newsalpha.baselines.endogenous import (
     compute_baseline_metrics,
 )
 from newsalpha.baselines.sestm import (
-    screening,
-    supervised_topic_estimate,
     compute_p_score,
+    screening,
+    sestm_expanding,
+    supervised_topic_estimate,
 )
 
 
@@ -113,3 +114,19 @@ def test_compute_p_score_range(doc_term_matrix, returns_array):
     p_scores = compute_p_score(doc_term_matrix[:, selected_idx], O)
     assert p_scores.shape == (100,)
     assert (p_scores >= 0).all() and (p_scores <= 1).all()
+
+
+def test_sestm_expanding_unattributed_corpus_raises():
+    """Корпус без привязки статей к тикерам ("ALL") — громкая ошибка, а не тихий пустой фрейм."""
+    rng = np.random.default_rng(0)
+    dates = pd.date_range("2015-01-05", periods=600, freq="W-MON")
+    returns_panel = pd.DataFrame(
+        rng.normal(0, 0.02, (600, 2)), index=dates, columns=["SBER", "GAZP"]
+    )
+    doc_term = rng.integers(0, 3, size=(200, 50))
+    art_dates = pd.Series(pd.date_range("2015-01-06", periods=200, freq="D"))
+    with pytest.raises(ValueError, match="не привязана"):
+        sestm_expanding(
+            returns_panel, doc_term, art_dates, ["SBER", "GAZP"],
+            np.array(["ALL"] * 200), train_years=2, test_years=1,
+        )
