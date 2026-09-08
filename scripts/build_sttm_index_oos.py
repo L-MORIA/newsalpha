@@ -70,7 +70,7 @@ def main():
             first_test_year=args.first_test_year,
         )
         out[t] = idx
-        aligned = pd.concat([idx.rename("idx"), r.rename("ret")], axis=1).dropna()
+        aligned = pd.concat([idx.rename("idx"), r.rename("ret")], axis=1, sort=False).dropna()
         spear = aligned["idx"].corr(aligned["ret"], method="spearman") if len(aligned) > 10 else np.nan
         print(f"{t}: тестовых недель {len(idx)} | Spearman(idx, ret)={spear:.3f}",
               flush=True)

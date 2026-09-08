@@ -99,6 +99,7 @@ def endogenous_baseline(
     Возвращает сигналы (вероятности) и метрики.
     """
     from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
+    from sklearn.calibration import CalibratedClassifierCV
     from sklearn.linear_model import LogisticRegression, RidgeClassifier
     from sklearn.svm import SVC
 
@@ -109,7 +110,10 @@ def endogenous_baseline(
         "RidgeClassifier": (RidgeClassifier, {"alpha": 1.0}),
         "RandomForest": (RandomForestClassifier, {"n_estimators": 100, "max_depth": 5, "random_state": 11}),
         "GradientBoosting": (GradientBoostingClassifier, {"n_estimators": 100, "max_depth": 3, "random_state": 11}),
-        "SVM": (SVC, {"kernel": "rbf", "probability": True, "C": 1.0}),
+        "SVM": (
+            CalibratedClassifierCV,
+            {"estimator": SVC(kernel="rbf", C=1.0), "ensemble": False},
+        ),
     }
 
     results = {}

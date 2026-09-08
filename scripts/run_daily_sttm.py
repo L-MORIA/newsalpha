@@ -85,7 +85,7 @@ def main():
             first_test_year=2015,
         )
         out[t] = idx
-        aligned = pd.concat([idx.rename("idx"), r.rename("ret")], axis=1).dropna()
+        aligned = pd.concat([idx.rename("idx"), r.rename("ret")], axis=1, sort=False).dropna()
         spear = aligned["idx"].corr(aligned["ret"], method="spearman") if len(aligned) > 10 else np.nan
         print(f"  {t}: дней {len(idx)} | Spearman={spear:.3f}", flush=True)
 
@@ -166,14 +166,14 @@ def main():
     all_dir = []
     for t in tickers:
         aligned = pd.concat([pd.Series(sttm_df[t].values, index=pd.to_datetime(sttm_df.index), name="idx"),
-                             pd.Series(rets[t].values, index=pd.to_datetime(rets.index), name="ret")], axis=1).dropna()
+                             pd.Series(rets[t].values, index=pd.to_datetime(rets.index), name="ret")], axis=1, sort=False).dropna()
         if len(aligned) > 10:
             correct = (np.sign(aligned["idx"]) == np.sign(aligned["ret"])).mean()
             all_dir.append(correct)
 
     mean_dir = np.mean(all_dir)
     print(f"  Mean Direction Accuracy: {mean_dir*100:.1f}%")
-    print(f"  RANDOM baseline:         50.0%")
+    print("  RANDOM baseline:         50.0%")
     print(f"  Improvement:             {(mean_dir-0.5)*100:+.1f}pp")
 
     # ── 11. Statistical significance ─────────────────────────────────
@@ -181,7 +181,7 @@ def main():
     spears = []
     for t in tickers:
         aligned = pd.concat([pd.Series(sttm_df[t].values, index=pd.to_datetime(sttm_df.index), name="idx"),
-                             pd.Series(rets[t].values, index=pd.to_datetime(rets.index), name="ret")], axis=1).dropna()
+                             pd.Series(rets[t].values, index=pd.to_datetime(rets.index), name="ret")], axis=1, sort=False).dropna()
         if len(aligned) > 10:
             s = aligned["idx"].corr(aligned["ret"], method="spearman")
             spears.append(s)

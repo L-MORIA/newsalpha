@@ -32,7 +32,7 @@ def main():
 
     all_dir_acc = []
     for t in cfg["tickers"]:
-        aligned = pd.concat([sttm[t].rename("idx"), rets[t].rename("ret")], axis=1).dropna()
+        aligned = pd.concat([sttm[t].rename("idx"), rets[t].rename("ret")], axis=1, sort=False).dropna()
         if len(aligned) < 10:
             continue
         # Direction: sign(idx) vs sign(ret)
@@ -42,7 +42,7 @@ def main():
 
     mean_dir = np.mean(all_dir_acc)
     print(f"\n  MEAN Direction Accuracy: {mean_dir*100:.1f}%")
-    print(f"  RANDOM baseline:         50.0%")
+    print("  RANDOM baseline:         50.0%")
     print(f"  Improvement:             {(mean_dir-0.5)*100:+.1f}pp")
 
     # ── 2. Statistical significance of mean Spearman ─────────────────
@@ -52,7 +52,7 @@ def main():
 
     spears = []
     for t in cfg["tickers"]:
-        aligned = pd.concat([sttm[t].rename("idx"), rets[t].rename("ret")], axis=1).dropna()
+        aligned = pd.concat([sttm[t].rename("idx"), rets[t].rename("ret")], axis=1, sort=False).dropna()
         if len(aligned) > 10:
             s = aligned["idx"].corr(aligned["ret"], method="spearman")
             spears.append(s)
@@ -65,7 +65,7 @@ def main():
 
     # One-sample t-test: H0: mean_spearman = 0
     t_stat, p_value = stats.ttest_1samp(spears, 0.0)
-    print(f"\n  One-sample t-test (H0: mean=0):")
+    print("\n  One-sample t-test (H0: mean=0):")
     print(f"    t-statistic:  {t_stat:.3f}")
     print(f"    p-value:      {p_value:.4f}")
     print(f"    Significant:  {'YES (p<0.05)' if p_value < 0.05 else 'NO (p>=0.05)'}")
@@ -92,7 +92,7 @@ def main():
     # Portfolio direction
     port_dir_correct = (port_df["port_ret"] > 0).mean()
     print(f"  Portfolio positive weeks: {port_dir_correct*100:.1f}%")
-    print(f"  (RANDOM baseline: ~50%)")
+    print("  (RANDOM baseline: ~50%)")
 
     # ── 4. Rank correlation over time (rolling) ──────────────────────
     print("\n" + "=" * 60)
