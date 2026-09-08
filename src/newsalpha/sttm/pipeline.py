@@ -36,7 +36,9 @@ def build_streams(
             "build_streams: несогласованные входы: "
             f"doc_topic={doc_topic.shape}, docs={len(docs_tokens)}, dates={len(dates)} — "
             "preproc и doc_topic должны описывать одни и те же документы в том же порядке "
-            "(частый случай: preproc расширен OOS-периодом, а doc_topic — нет)"
+            "(частые случаи: preproc обрезан smoke-прогоном --limit "
+            "(теперь такие прогоны пишут в отдельный файл, см. preprocess_news.py); "
+            "либо preproc расширен OOS-периодом, а doc_topic — нет)"
         )
     fridays = friday_of(dates)
     labels = sorted(pd.unique(fridays))
@@ -64,6 +66,14 @@ def build_streams_daily(
     vocab: dict[str, int],
 ) -> tuple[np.ndarray, np.ndarray, list[pd.Timestamp]]:
     """Θ[темы × дни], c[слова × дни], список дат (календарь потоков, дневной)."""
+    if doc_topic.shape[0] != len(docs_tokens) or len(docs_tokens) != len(dates):
+        raise ValueError(
+            "build_streams_daily: несогласованные входы: "
+            f"doc_topic={doc_topic.shape}, docs={len(docs_tokens)}, dates={len(dates)} — "
+            "preproc и doc_topic должны описывать одни и те же документы в том же порядке "
+            "(частые случаи: preproc обрезан smoke-прогоном --limit; "
+            "либо preproc расширен OOS-периодом, а doc_topic — нет)"
+        )
     dates_pd = pd.to_datetime(dates)
     labels = sorted(pd.unique(dates_pd))
     day_idx = dates_pd.map({d: i for i, d in enumerate(labels)}).to_numpy()

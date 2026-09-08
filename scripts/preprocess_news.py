@@ -61,11 +61,18 @@ def main():
         )
         print(f"препроцессинг: {time.time() - t0:.0f} c", flush=True)
 
-        out_path = out_dir / f"news_{name}_preproc.parquet"
+        out_suffix = f"_limit{args.limit}" if args.limit else ""
+        if args.limit:
+            print(
+                f"ВНИМАНИЕ: smoke-режим --limit={args.limit}: боевой файл НЕ тронут, "
+                f"пишу в news_{name}_preproc{out_suffix}.parquet",
+                flush=True,
+            )
+        out_path = out_dir / f"news_{name}_preproc{out_suffix}.parquet"
         df.to_parquet(out_path, index=False)
 
         vocab, stats = idf_vocab(df["preproc"].tolist())
-        (out_dir / f"vocab_{name}.json").write_text(
+        (out_dir / f"vocab_{name}{out_suffix}.json").write_text(
             json.dumps({"stats": stats, "vocab": vocab}, ensure_ascii=False),
             encoding="utf-8",
         )
