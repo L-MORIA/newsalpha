@@ -31,6 +31,13 @@ def build_streams(
     vocab: dict[str, int],
 ) -> tuple[np.ndarray, np.ndarray, list[pd.Timestamp]]:
     """Θ[темы × недели], c[слова × недели], список пятниц (календарь потоков)."""
+    if doc_topic.shape[0] != len(docs_tokens) or len(docs_tokens) != len(dates):
+        raise ValueError(
+            "build_streams: несогласованные входы: "
+            f"doc_topic={doc_topic.shape}, docs={len(docs_tokens)}, dates={len(dates)} — "
+            "preproc и doc_topic должны описывать одни и те же документы в том же порядке "
+            "(частый случай: preproc расширен OOS-периодом, а doc_topic — нет)"
+        )
     fridays = friday_of(dates)
     labels = sorted(pd.unique(fridays))
     week_idx = fridays.map({w: i for i, w in enumerate(labels)}).to_numpy()

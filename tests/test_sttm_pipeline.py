@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from newsalpha.sttm.pipeline import sttm_expanding
+from newsalpha.sttm.pipeline import build_streams, sttm_expanding
 
 _WORDS = [f"w{i}" for i in range(20)]
 VOCAB = {w: i for i, w in enumerate(_WORDS)}
@@ -103,3 +103,14 @@ def test_index_in_unit_range(world):
     rets, theta, c_words, weeks = world
     idx = sttm_expanding(rets, theta, c_words, TW, VOCAB, weeks, first_test_year=2022)
     assert ((idx > 0) & (idx < 1)).all()
+
+
+def test_build_streams_rejects_mismatched_inputs():
+    """preproc расширен OOS-периодом, а doc_topic — нет: громкая ошибка, а не cryptic broadcast."""
+    rng = np.random.default_rng(7)
+    n_docs, n_topics = 60, 2
+    doc_topic = rng.dirichlet(np.ones(n_topics), size=n_docs)
+    docs_tokens = [["w0", "w1"] for _ in range(n_docs + 10)]
+    dates = pd.Series(pd.date_range("2020-01-06", periods=n_docs + 10, freq="D"))
+    with pytest.raises(ValueError, match="несогласованные входы"):
+        build_streams(doc_topic, docs_tokens, dates, VOCAB)
