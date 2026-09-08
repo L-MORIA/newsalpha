@@ -1,5 +1,13 @@
 # newsalpha: Итоговый отчёт (26.08.2026)
 
+> **Обновление 08.09.2026:** ниже — исторический срез на 26.08 (эра 316 недель,
+> Sharpe 1.42). Полный пересчёт сентября (365 недель, full corpus):
+> воспроизведение 1.2174, full-corpus in-sample 0.36, сиротское placebo p=0.50
+> заменено воспроизводимым random-signal тестом (p≈0.06–0.08, NS).
+> Актуальные цифры — в [STTM_reproduction_negative_result.md](experiments/longshort/STTM_reproduction_negative_result.md)
+> (§4.8) и [findings/recompute_2026-09-08.md](findings/recompute_2026-09-08.md).
+> Вывод «метод не работает» пересчётом усилен, а не пересмотрен.
+
 ## Резюме
 
 Проект **newsalpha** — воспроизведение метода STTM (PeerJ CS 2022) для прогнозирования

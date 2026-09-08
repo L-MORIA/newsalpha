@@ -7,7 +7,7 @@ long-only портфель топ-20% акций MOEX.
 
 > ## ⚠️ Итог: воспроизвели — опровергли
 >
-> Формальное воспроизведение удалось (gross Sharpe 1.22 при 1.37 ± 0.09 в статье), **но пять независимых тестов показали, что Sharpe — артефакт кросс-секционного отбора, а не новостная альфа**: placebo p = 0.50; AR(5) по цене не хуже; out-of-sample 2022–2026 Sharpe −0.23; long-short net Sharpe 0.064 (≈ placebo); STTM ≈ random top-20%.
+> Формальное воспроизведение удалось (gross Sharpe 1.22 при 1.37 ± 0.09 в статье), **но пять независимых тестов показали, что Sharpe — артефакт кросс-секционного отбора, а не новостная альфа**: random-signal placebo p ≈ 0.06–0.08 (NS); AR(5) по цене не хуже; out-of-sample 2022–2026 Sharpe −0.23; long-short net Sharpe 0.064 (≈ placebo); STTM ≈ random top-20%; full-corpus in-sample 2013–2026 — всего 0.36.
 >
 > Полный разбор с цифрами и кодом — **[STTM_reproduction_negative_result.md](experiments/longshort/STTM_reproduction_negative_result.md)**.
 
